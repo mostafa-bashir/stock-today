@@ -9,6 +9,7 @@ import { SMASelector } from "../components/SMASelector";
 import { PeriodSelector } from "../components/PeriodSelector";
 import { AlphaVantageTimeSeriesDailyResponse } from "../interfaces/alphaVantage";
 import { SymbolInput } from "../components/SymbolInput";
+import { Navbar } from "../components/Navbar";
 
 const SMA_PERIODS = [10, 20, 50, 100];
 const PERIODS = [
@@ -166,47 +167,58 @@ export default function Home() {
   const display = hovered || latest;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8">
-      <SymbolInput value={symbol} onChange={setSymbol} />
-      <h1 className="text-2xl font-bold mb-4">{symbol} End of Day (EOD) Stock Price</h1>
-      {display && (
-        <OhlcDisplay
-          date={display.date}
-          open={display["1. open"]}
-          high={display["2. high"]}
-          low={display["3. low"]}
-          close={display["4. close"]}
-          volume={display["5. volume"]}
-        />
-      )}
-      <SMASelector
-        periods={SMA_PERIODS}
-        selected={selectedSMAs}
-        onChange={handleSMAChange}
-      />
-      <PeriodSelector
-        periods={PERIODS}
-        selected={selectedPeriod}
-        onChange={setSelectedPeriod}
-        customStart={customStart}
-        customEnd={customEnd}
-        setCustomStart={setCustomStart}
-        setCustomEnd={setCustomEnd}
-      />
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
-      {!loading && !error && data && (data["Note"] || data["Error Message"]) && (
-        <p className="text-red-500">{data["Note"] || data["Error Message"]}</p>
-      )}
-      {!loading && !error && data && data["Time Series (Daily)"] && (
-        <HighchartsReact highcharts={Highcharts} options={options} />
-      )}
-      {!loading && !error && data && !data["Time Series (Daily)"] && !data["Note"] && !data["Error Message"] && (
-        <p className="text-red-500">No data found for symbol "{symbol}".</p>
-      )}
-      {!loading && !error && !data && (
-        <p>No data available.</p>
-      )}
+    <div className="min-h-screen bg-[#111]">
+      <Navbar />
+      <main className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] py-2 sm:py-8">
+        <div className="w-full max-w-full sm:max-w-4xl bg-[#18191A] rounded-2xl shadow-lg border border-[#222] p-2 sm:p-8 flex flex-col items-center overflow-x-auto">
+          <div className="w-full flex flex-col gap-2 sm:gap-4 items-center">
+            <SymbolInput value={symbol} onChange={setSymbol} />
+            <h1 className="text-lg sm:text-3xl font-bold mb-1 sm:mb-2 text-white text-center break-words">{symbol} End of Day (EOD) Stock Price</h1>
+            {display && (
+              <OhlcDisplay
+                date={display.date}
+                open={display["1. open"]}
+                high={display["2. high"]}
+                low={display["3. low"]}
+                close={display["4. close"]}
+                volume={display["5. volume"]}
+              />
+            )}
+            <SMASelector
+              periods={SMA_PERIODS}
+              selected={selectedSMAs}
+              onChange={handleSMAChange}
+            />
+            <PeriodSelector
+              periods={PERIODS}
+              selected={selectedPeriod}
+              onChange={setSelectedPeriod}
+              customStart={customStart}
+              customEnd={customEnd}
+              setCustomStart={setCustomStart}
+              setCustomEnd={setCustomEnd}
+            />
+          </div>
+          <div className="w-full flex justify-center items-center min-h-[220px] sm:min-h-[400px] mt-2 sm:mt-4">
+            {loading && <p className="text-white">Loading...</p>}
+            {error && <p className="text-red-500">Error: {error}</p>}
+            {!loading && !error && data && (data["Note"] || data["Error Message"]) && (
+              <p className="text-red-500">{data["Note"] || data["Error Message"]}</p>
+            )}
+            {!loading && !error && data && data["Time Series (Daily)"] && (
+              <div className="w-full overflow-x-auto">
+                <HighchartsReact highcharts={Highcharts} options={options} />
+              </div>
+            )}
+            {!loading && !error && data && !data["Time Series (Daily)"] && !data["Note"] && !data["Error Message"] && (
+              <p className="text-red-500">No data found for symbol "{symbol}".</p>
+            )}
+            {!loading && !error && !data && (
+              <p className="text-white">No data available.</p>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
