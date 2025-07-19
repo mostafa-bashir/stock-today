@@ -1,103 +1,199 @@
-import Image from "next/image";
+"use client";
+
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
+import { useAlphaVantage } from "../hooks/useAlphaVantage";
+import { useMemo, useState } from "react";
+import { OhlcDisplay } from "../components/OhlcDisplay";
+import { SMASelector } from "../components/SMASelector";
+import { PeriodSelector } from "../components/PeriodSelector";
+import { AlphaVantageTimeSeriesDailyResponse } from "../interfaces/alphaVantage";
+
+const SMA_PERIODS = [10, 20, 50, 100];
+const PERIODS = [
+  { label: "1M", value: "1M" },
+  { label: "3M", value: "3M" },
+  { label: "6M", value: "6M" },
+  { label: "1Y", value: "1Y" },
+  { label: "YTD", value: "YTD" },
+  { label: "MAX", value: "MAX" },
+  { label: "Custom", value: "CUSTOM" },
+];
+
+function calculateSMA(data: [number, number][], period: number): [number, number][] {
+  if (data.length < period) return [];
+  const sma: [number, number][] = [];
+  for (let i = period - 1; i < data.length; i++) {
+    const sum = data.slice(i - period + 1, i + 1).reduce((acc, d) => acc + d[1], 0);
+    sma.push([data[i][0], sum / period]);
+  }
+  return sma;
+}
+
+function getPeriodRange(period: string, allDates: number[]): { start: number; end: number } {
+  const end = allDates[allDates.length - 1];
+  const now = new Date(end);
+  let start: number;
+  switch (period) {
+    case "1M":
+      start = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).getTime();
+      break;
+    case "3M":
+      start = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()).getTime();
+      break;
+    case "6M":
+      start = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()).getTime();
+      break;
+    case "1Y":
+      start = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).getTime();
+      break;
+    case "YTD":
+      start = new Date(now.getFullYear(), 0, 1).getTime();
+      break;
+    case "MAX":
+    default:
+      start = allDates[0];
+      break;
+  }
+  return { start, end };
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { data, loading, error } = useAlphaVantage({
+    functionType: "TIME_SERIES_DAILY",
+    symbol: "AAPL",
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const [selectedSMAs, setSelectedSMAs] = useState<number[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("1Y");
+  const [customStart, setCustomStart] = useState<Date | null>(null);
+  const [customEnd, setCustomEnd] = useState<Date | null>(null);
+  const [hovered, setHovered] = useState<any>(null);
+
+  const options = useMemo(() => {
+    if (!data || !data["Time Series (Daily)"]) return {};
+    const timeSeries = data["Time Series (Daily)"];
+    let chartData: [number, number][] = Object.entries(timeSeries)
+      .map(([date, values]): [number, number] => {
+        const v = values as Record<string, string>;
+        return [
+          new Date(date).getTime(),
+          parseFloat(v["4. close"]),
+        ];
+      })
+      .sort((a, b) => a[0] - b[0]);
+
+    if (chartData.length > 0) {
+      let start = chartData[0][0];
+      let end = chartData[chartData.length - 1][0];
+      if (selectedPeriod !== "CUSTOM") {
+        const range = getPeriodRange(selectedPeriod, chartData.map(d => d[0]));
+        start = range.start;
+        end = range.end;
+      } else if (customStart && customEnd) {
+        start = customStart.getTime();
+        end = customEnd.getTime();
+      }
+      chartData = chartData.filter(([date]) => date >= start && date <= end);
+    }
+
+    const ohlcMap: Record<number, any> = {};
+    if (data && data["Time Series (Daily)"]) {
+      Object.entries(data["Time Series (Daily)"]).forEach(([date, values]) => {
+        const v = values as Record<string, string>;
+        ohlcMap[new Date(date).getTime()] = v;
+      });
+    }
+
+    const series = [
+      {
+        type: "line" as const,
+        name: "AAPL Close Price",
+        data: chartData,
+        point: {
+          events: {
+            mouseOver: function (this: any) {
+              setHovered({
+                date: this.x,
+                ...ohlcMap[this.x],
+              });
+            },
+          },
+        },
+      },
+      ...selectedSMAs.map((period) => ({
+        type: "line" as const,
+        name: `SMA ${period}`,
+        data: calculateSMA(chartData, period),
+        dashStyle: "ShortDash",
+        enableMouseTracking: false,
+      })),
+    ];
+
+    return {
+      title: { text: "AAPL End of Day (EOD) Stock Price" },
+      xAxis: { type: "datetime" },
+      yAxis: { title: { text: "Price (USD)" } },
+      series,
+      chart: { height: 500 },
+      tooltip: { enabled: true },
+    };
+  }, [data, selectedSMAs, selectedPeriod, customStart, customEnd]);
+
+  const handleSMAChange = (period: number) => {
+    setSelectedSMAs((prev) =>
+      prev.includes(period)
+        ? prev.filter((p) => p !== period)
+        : [...prev, period]
+    );
+  };
+
+  let latest = null;
+  if (data && data["Time Series (Daily)"]) {
+    const all = Object.entries(data["Time Series (Daily)"])
+      .map(([date, values]) => [new Date(date).getTime(), values] as [number, any])
+      .sort((a, b) => a[0] - b[0]);
+    if (all.length > 0) {
+      latest = { date: all[all.length - 1][0], ...all[all.length - 1][1] };
+    }
+  }
+  const display = hovered || latest;
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-8">
+      <h1 className="text-2xl font-bold mb-4">AAPL End of Day (EOD) Stock Price</h1>
+      {display && (
+        <OhlcDisplay
+          date={display.date}
+          open={display["1. open"]}
+          high={display["2. high"]}
+          low={display["3. low"]}
+          close={display["4. close"]}
+          volume={display["5. volume"]}
+        />
+      )}
+      <SMASelector
+        periods={SMA_PERIODS}
+        selected={selectedSMAs}
+        onChange={handleSMAChange}
+      />
+      <PeriodSelector
+        periods={PERIODS}
+        selected={selectedPeriod}
+        onChange={setSelectedPeriod}
+        customStart={customStart}
+        customEnd={customEnd}
+        setCustomStart={setCustomStart}
+        setCustomEnd={setCustomEnd}
+      />
+      {loading && <p>Loading...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+      {!loading && !error && data && data["Time Series (Daily)"] && (
+        <HighchartsReact highcharts={Highcharts} options={options} />
+      )}
+      {!loading && !error && (!data || !data["Time Series (Daily)"]) && (
+        <p>No data available.</p>
+      )}
     </div>
   );
 }
