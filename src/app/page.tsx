@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable */
 
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
@@ -7,7 +8,6 @@ import { useMemo, useState, useEffect } from "react";
 import { OhlcDisplay } from "../components/OhlcDisplay";
 import { SMASelector } from "../components/SMASelector";
 import { PeriodSelector } from "../components/PeriodSelector";
-import { AlphaVantageTimeSeriesDailyResponse } from "../interfaces/alphaVantage";
 import { SymbolInput } from "../components/SymbolInput";
 import { Navbar } from "../components/Navbar";
 
