@@ -77,6 +77,17 @@ export default function Home() {
     setHovered(null);
   }, [symbol]);
 
+  useEffect(() => {
+    import("highcharts/modules/stock").then((module: any) => {
+      // Highcharts stock module does not have proper types, so we use 'any'
+      if (typeof module === "function") {
+        module(Highcharts);
+      } else if (module && typeof module.default === "function") {
+        module.default(Highcharts);
+      }
+    });
+  }, []);
+
   const options = useMemo(() => {
     if (!data || !data["Time Series (Daily)"]) return {};
     const timeSeries = data["Time Series (Daily)"];
@@ -86,6 +97,31 @@ export default function Home() {
         return [
           new Date(date).getTime(),
           parseFloat(v["4. close"]),
+        ];
+      })
+      .sort((a, b) => a[0] - b[0]);
+
+    // Prepare OHLC data for candlestick
+    let ohlcData: [number, number, number, number, number][] = Object.entries(timeSeries)
+      .map(([date, values]): [number, number, number, number, number] => {
+        const v = values as Record<string, string>;
+        return [
+          new Date(date).getTime(),
+          parseFloat(v["1. open"]),
+          parseFloat(v["2. high"]),
+          parseFloat(v["3. low"]),
+          parseFloat(v["4. close"]),
+        ];
+      })
+      .sort((a, b) => a[0] - b[0]);
+
+    // Prepare volume data for column series
+    let volumeData: [number, number][] = Object.entries(timeSeries)
+      .map(([date, values]): [number, number] => {
+        const v = values as Record<string, string>;
+        return [
+          new Date(date).getTime(),
+          parseFloat(v["5. volume"]),
         ];
       })
       .sort((a, b) => a[0] - b[0]);
@@ -102,6 +138,8 @@ export default function Home() {
         end = customEnd.getTime();
       }
       chartData = chartData.filter(([date]) => date >= start && date <= end);
+      ohlcData = ohlcData.filter(([date]) => date >= start && date <= end);
+      volumeData = volumeData.filter(([date]) => date >= start && date <= end);
     }
 
     const ohlcMap: Record<number, any> = {};
@@ -113,6 +151,37 @@ export default function Home() {
     }
 
     const series = [
+      {
+        type: "candlestick" as const,
+        name: `${symbol} Candlestick`,
+        data: ohlcData,
+        tooltip: {
+          valueDecimals: 2
+        },
+        point: {
+          events: {
+            mouseOver: function (this: any) {
+              setHovered({
+                date: this.x,
+                ...ohlcMap[this.x],
+              });
+            },
+          },
+        },
+        zIndex: 2,
+      },
+      {
+        type: "column" as const,
+        name: "Volume",
+        data: volumeData,
+        yAxis: 1,
+        color: "#8884d8",
+        tooltip: {
+          valueDecimals: 0,
+          valueSuffix: " shares"
+        },
+        zIndex: 1,
+      },
       {
         type: "line" as const,
         name: `${symbol} Close Price`,
@@ -127,6 +196,7 @@ export default function Home() {
             },
           },
         },
+        zIndex: 3,
       },
       ...selectedSMAs.map((period) => ({
         type: "line" as const,
@@ -134,16 +204,56 @@ export default function Home() {
         data: calculateSMA(chartData, period),
         dashStyle: "ShortDash",
         enableMouseTracking: false,
+        zIndex: 4,
       })),
     ];
 
     return {
       title: { text: `${symbol} End of Day (EOD) Stock Price` },
-      xAxis: { type: "datetime" },
-      yAxis: { title: { text: "Price (USD)" } },
+      xAxis: { type: "datetime", crosshair: true },
+      yAxis: [
+        { title: { text: "Price (USD)" }, height: "70%", top: "0%" },
+        { title: { text: "Volume" }, top: "75%", height: "25%", offset: 0, opposite: false }
+      ],
       series,
       chart: { height: 500 },
-      tooltip: { enabled: true },
+      tooltip: {
+        shared: true,
+        useHTML: true,
+        formatter: function (this: any): string {
+          const points: any[] = this.points || [this];
+          let s: string = `<b>${Highcharts.dateFormat('%A, %b %e, %Y', this.x)}</b><br/>`;
+          let ohlc: any = null;
+          let volume: number | undefined = undefined;
+          let smas: string[] = [];
+          points.forEach((point: any) => {
+            if (point.series.type === 'candlestick' && point.point) {
+              ohlc = point.point;
+            } else if (point.series.type === 'column' && typeof point.y === 'number') {
+              volume = point.y;
+            } else if (point.series.name.startsWith('SMA')) {
+              smas.push(`<span style='color:${point.color}'>${point.series.name}: <b>${point.y?.toFixed(2)}</b></span>`);
+            }
+          });
+          if (ohlc) {
+            s += `<span style='color:#fff'>O: <b>${ohlc.open}</b> H: <b>${ohlc.high}</b> L: <b>${ohlc.low}</b> C: <b>${ohlc.close}</b></span><br/>`;
+          }
+          if (typeof volume === 'number') {
+            s += `<span style='color:#8884d8'>Volume: <b>${(volume as number).toLocaleString()}</b></span><br/>`;
+          }
+          if (smas.length) {
+            s += smas.join('<br/>') + '<br/>';
+          }
+          return s;
+        }
+      },
+      plotOptions: {
+        series: {
+          dataGrouping: {
+            enabled: false
+          }
+        }
+      },
     };
   }, [data, selectedSMAs, selectedPeriod, customStart, customEnd, symbol]);
 
