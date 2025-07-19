@@ -34,6 +34,7 @@ export function useAlphaVantage({ functionType, symbol, params = {} }: UseAlphaV
         return res.json();
       })
       .then((json) => {
+        console.log(json);
         setData(json);
         setLoading(false);
       })

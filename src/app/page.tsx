@@ -3,11 +3,12 @@
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { useAlphaVantage } from "../hooks/useAlphaVantage";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { OhlcDisplay } from "../components/OhlcDisplay";
 import { SMASelector } from "../components/SMASelector";
 import { PeriodSelector } from "../components/PeriodSelector";
 import { AlphaVantageTimeSeriesDailyResponse } from "../interfaces/alphaVantage";
+import { SymbolInput } from "../components/SymbolInput";
 
 const SMA_PERIODS = [10, 20, 50, 100];
 const PERIODS = [
@@ -59,9 +60,10 @@ function getPeriodRange(period: string, allDates: number[]): { start: number; en
 }
 
 export default function Home() {
+  const [symbol, setSymbol] = useState<string>("AAPL");
   const { data, loading, error } = useAlphaVantage({
     functionType: "TIME_SERIES_DAILY",
-    symbol: "AAPL",
+    symbol,
   });
 
   const [selectedSMAs, setSelectedSMAs] = useState<number[]>([]);
@@ -69,6 +71,10 @@ export default function Home() {
   const [customStart, setCustomStart] = useState<Date | null>(null);
   const [customEnd, setCustomEnd] = useState<Date | null>(null);
   const [hovered, setHovered] = useState<any>(null);
+
+  useEffect(() => {
+    setHovered(null);
+  }, [symbol]);
 
   const options = useMemo(() => {
     if (!data || !data["Time Series (Daily)"]) return {};
@@ -108,7 +114,7 @@ export default function Home() {
     const series = [
       {
         type: "line" as const,
-        name: "AAPL Close Price",
+        name: `${symbol} Close Price`,
         data: chartData,
         point: {
           events: {
@@ -131,14 +137,14 @@ export default function Home() {
     ];
 
     return {
-      title: { text: "AAPL End of Day (EOD) Stock Price" },
+      title: { text: `${symbol} End of Day (EOD) Stock Price` },
       xAxis: { type: "datetime" },
       yAxis: { title: { text: "Price (USD)" } },
       series,
       chart: { height: 500 },
       tooltip: { enabled: true },
     };
-  }, [data, selectedSMAs, selectedPeriod, customStart, customEnd]);
+  }, [data, selectedSMAs, selectedPeriod, customStart, customEnd, symbol]);
 
   const handleSMAChange = (period: number) => {
     setSelectedSMAs((prev) =>
@@ -161,7 +167,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8">
-      <h1 className="text-2xl font-bold mb-4">AAPL End of Day (EOD) Stock Price</h1>
+      <SymbolInput value={symbol} onChange={setSymbol} />
+      <h1 className="text-2xl font-bold mb-4">{symbol} End of Day (EOD) Stock Price</h1>
       {display && (
         <OhlcDisplay
           date={display.date}
@@ -188,10 +195,16 @@ export default function Home() {
       />
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
+      {!loading && !error && data && (data["Note"] || data["Error Message"]) && (
+        <p className="text-red-500">{data["Note"] || data["Error Message"]}</p>
+      )}
       {!loading && !error && data && data["Time Series (Daily)"] && (
         <HighchartsReact highcharts={Highcharts} options={options} />
       )}
-      {!loading && !error && (!data || !data["Time Series (Daily)"]) && (
+      {!loading && !error && data && !data["Time Series (Daily)"] && !data["Note"] && !data["Error Message"] && (
+        <p className="text-red-500">No data found for symbol "{symbol}".</p>
+      )}
+      {!loading && !error && !data && (
         <p>No data available.</p>
       )}
     </div>
