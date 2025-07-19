@@ -56,11 +56,11 @@ export const SymbolInput: React.FC<SymbolInputProps> = ({ value, onChange }) => 
         <span className="text-xs text-red-500 ml-20">Invalid symbol</span>
       )}
       {focused && suggestions.length > 0 && (
-        <ul className="absolute left-20 top-10 bg-white border rounded shadow z-10 w-28 max-h-40 overflow-auto">
+        <ul className="absolute left-20 top-10 bg-white text-black border border-gray-700 rounded shadow z-10 w-28 max-h-40 overflow-auto">
           {suggestions.map((s) => (
             <li
               key={s}
-              className="px-2 py-1 hover:bg-blue-100 cursor-pointer"
+              className="px-2 py-1 text-black font-semibold hover:bg-black-800 hover:!text-black cursor-pointer"
               onMouseDown={() => handleSuggestionClick(s)}
             >
               {s}
