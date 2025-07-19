@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stock Today
+
+[Live Demo](https://stock-today-bsiq.vercel.app/)
+
+A modern, investor-focused web app for visualizing end-of-day (EOD) stock prices with advanced charting features, built with Next.js, React, and Highcharts.
+
+---
+
+## Screenshot
+
+![Stock Today - Working Example](docs/screenshot.png)
+
+*Example: AAPL candlestick, volume, and SMA overlays*
+
+---
+
+## Features
+
+- **Symbol Search:** Instantly search and switch between popular stock symbols.
+- **Candlestick Chart:** Interactive candlestick chart for daily OHLC (Open, High, Low, Close) data.
+- **Volume Bars:** Visualize daily trading volume as a column chart below the price chart.
+- **SMA Overlays:** Toggle Simple Moving Averages (SMA) for 10, 20, 50, and 100-day periods.
+- **Period Selection:** View data for 1M, 3M, 6M, 1Y, YTD, MAX, or a custom date range.
+- **Enhanced Tooltip:** Rich tooltip displays OHLC, volume, and all selected SMAs for each day.
+- **Crosshair Cursor:** Precise crosshair for reading values and dates.
+- **Responsive Design:** Optimized for both desktop and mobile devices.
+- **Error Handling:** User-friendly messages for invalid symbols, API errors, or no data.
+- **Modern UI:** Clean, dark-themed interface with intuitive controls.
+
+---
+
+## Technologies Used
+
+- **Next.js** (App Router, SSR/CSR)
+- **React 19**
+- **Highcharts** (with Stock module)
+- **highcharts-react-official**
+- **Tailwind CSS** (custom dark theme)
+- **Alpha Vantage API** (for EOD stock data)
+- **TypeScript** (type safety)
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js (v18+ recommended)
+- Alpha Vantage API key (free at https://www.alphavantage.co/support/#api-key)
+
+### Installation
+
+```bash
+git clone https://github.com/your-username/stock-today.git
+cd stock-today
+npm install
+```
+
+### Environment Setup
+
+Create a `.env.local` file in the root directory:
+
+```
+NEXT_PUBLIC_ALPHA_VANTAGE_KEY=your_alpha_vantage_api_key
+```
+
+### Running Locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+src/
+  app/
+    page.tsx         # Main page and chart logic
+    layout.tsx       # App layout
+    globals.css      # Global styles (Tailwind)
+  components/
+    Navbar.tsx       # Top navigation bar
+    OhlcDisplay.tsx  # OHLC value display
+    SMASelector.tsx  # SMA toggle controls
+    PeriodSelector.tsx # Period selection controls
+    SymbolInput.tsx  # Symbol search input
+  hooks/
+    useAlphaVantage.ts # Data fetching hook
+  interfaces/
+    alphaVantage.ts  # TypeScript interfaces for API
+  constants/
+    index.ts         # App constants
+  utils/
+    index.ts         # Utility functions
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Important Note About Data Limits
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+If you see a message like `No data found for symbol "XYZ"` for a valid stock symbol, it may be because the [Alpha Vantage](https://www.alphavantage.co/) free API daily request limit has been reached. The free tier allows only a limited number of requests per day. If this happens, please try again the next day or consider upgrading your Alpha Vantage plan for higher limits.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Credits
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Highcharts](https://www.highcharts.com/)
+- [Alpha Vantage](https://www.alphavantage.co/)
+- [Next.js](https://nextjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+---
+
+## License
+
+MIT
