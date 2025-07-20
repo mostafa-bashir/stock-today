@@ -216,7 +216,7 @@ export default function Home() {
         { title: { text: "Volume" }, top: "75%", height: "25%", offset: 0, opposite: false }
       ],
       series,
-      chart: { height: 500 },
+      chart: { height: 700 }, // Make chart bigger
       tooltip: {
         shared: true,
         useHTML: true,
